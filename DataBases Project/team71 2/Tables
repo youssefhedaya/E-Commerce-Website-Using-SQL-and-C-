@@ -1,0 +1,204 @@
+CREATE table Users(
+    username VARCHAR(20) PRIMARY KEY,
+    password VARCHAR(20),
+    first_name VARCHAR(20),
+    last_name VARCHAR(20),
+    email VARCHAR(20) NOT NULL	
+)
+CREATE Table User_mobile_numbers(
+    mobile_number INT, 
+    username VARCHAR(20),
+    PRIMARY KEY(mobile_number,username),
+    FOREIGN KEY(username) REFERENCES Users ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table User_Addresses(
+    address VARCHAR(20), 
+    username VARCHAR(20),
+    PRIMARY KEY(address,username),
+    FOREIGN KEY(username) REFERENCES Users ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Customer(
+    username VARCHAR(20) PRIMARY KEY,
+    points INT,
+    FOREIGN KEY(username) REFERENCES Users ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Admins(
+    username VARCHAR(20) PRIMARY KEY,
+    FOREIGN KEY(username) REFERENCES Users ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Vendor(
+    username VARCHAR(20) PRIMARY KEY NOT NULL,
+    activated BIT, 
+    company_name VARCHAR(20) NOT NULL,
+    bank_acc_no VARCHAR(20) NOT NULL,
+    admin_username VARCHAR(20),
+    FOREIGN KEY(username) REFERENCES Users,
+    FOREIGN KEY(admin_username) REFERENCES Admins ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Delivery_Person(
+    username VARCHAR(20) PRIMARY KEY,
+    FOREIGN KEY(username) REFERENCES Users ON UPDATE CASCADE ON DELETE NO ACTION,
+    is_activated BIT
+)
+
+CREATE Table Credit_Card(
+    number VARCHAR(20) PRIMARY KEY,
+    expiry_date DATETIME,
+    cvv_code varchar(4)
+)
+
+CREATE Table Delivery(
+    id INT PRIMARY KEY IDENTITY,
+	type VARCHAR(20), --Added in final
+    time_duration INT NOT NULL,
+    fees INT NOT NULL,
+    username VARCHAR(20),
+    FOREIGN KEY(username) REFERENCES Admins ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+
+CREATE Table Orders(
+    order_no INT PRIMARY KEY IDENTITY,
+    order_date DATETIME,
+    total_amount decimal(10,2),
+    cash_amount decimal(10,2),
+    credit_amount decimal(10,2),
+    payment_type VARCHAR(20) NOT NULL, 
+   order_status VARCHAR(20),
+   remaining_days INT,
+   time_limit INT,
+   giftcard_code_used INT,
+    customer_name VARCHAR(20),
+   delivery_id INT,
+   creditCard_number INT,
+   FOREIGN KEY(customer_name) REFERENCES Customer ON UPDATE NO ACTION ON DELETE NO ACTION,
+   FOREIGN KEY(delivery_id) REFERENCES Delivery ON UPDATE NO ACTION ON DELETE NO ACTION,
+   FOREIGN KEY(creditCard_number) REFERENCES Credit_Card ON UPDATE NO ACTION ON DELETE NO ACTION,
+   FOREIGN KEY(giftcard_code_used) REFERENCES Giftcard ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+
+CREATE TABLE Giftcard(
+    code INT PRIMARY KEY,
+    expiry_date DATETIME,
+    amount decimal(10,2),
+    username VARCHAR(20),
+    FOREIGN KEY(username) REFERENCES Admins ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Product(
+    serial_no INT PRIMARY KEY IDENTITY,
+    product_name VARCHAR(20) NOT NULL,
+    category VARCHAR(20) NOT NULL,
+    product_description text NOT NULL,
+	price decimal(10,2), --Added in final
+    final_price decimal(10,2) NOT NULL,
+    color VARCHAR(20) NOT NULL,
+    available BIT NOT NULL,
+    rate INT NOT NULL,
+    vendor_username VARCHAR(20),
+    customer_username VARCHAR(20),
+    customer_order_id  INT,
+    FOREIGN KEY(vendor_username) REFERENCES Vendor ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(customer_order_id) REFERENCES Orders ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(customer_username) REFERENCES customer ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+
+CREATE Table CustomerAddsToCartProduct(
+    serial_no INT,
+    customer_name VARCHAR(20),
+    PRIMARY KEY(serial_no,customer_name),
+    FOREIGN KEY(serial_no) REFERENCES Product ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(customer_name) REFERENCES Customer ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Todays_Deals(
+    deal_id INT PRIMARY KEY IDENTITY,
+    deal_amount decimal(10,2),
+    expiry_date DATETIME,
+    admin_username VARCHAR(20),
+    FOREIGN KEY(admin_username) REFERENCES Admins ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Todays_Deals_Product(
+    deal_id INT,
+    serial_no INT,
+    issue_date DATETIME, --mesh fel schema
+    PRIMARY KEY(deal_id,serial_no),
+    FOREIGN KEY(deal_id) REFERENCES Todays_Deals ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(serial_no) REFERENCES Product ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE Table Offer(
+    offer_id INT PRIMARY KEY IDENTITY,
+    offer_amount decimal(10,2),
+    expiry_date DATETIME
+)
+
+CREATE TABLE offersOnProduct(
+    offer_id INT,
+    serial_no INT,
+    PRIMARY KEY(offer_id,serial_no),
+    FOREIGN KEY(offer_id) REFERENCES Offer ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(serial_no) REFERENCES Product ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE TABLE Customer_Question_Product(
+    serial_no INT,
+    customer_name VARCHAR(20),
+    question text,
+    answer text,
+    PRIMARY KEY(serial_no,customer_name),
+    FOREIGN KEY(serial_no) REFERENCES Product ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(customer_name) REFERENCES Customer ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE TABLE WishList(
+    username VARCHAR(20),
+    name VARCHAR(20),
+    PRIMARY KEY(username,name),
+    FOREIGN KEY(username) REFERENCES Customer ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE TABLE Wishlist_Product(
+    username VARCHAR(20),
+    wish_name VARCHAR(20),
+    serial_no INT,
+    PRIMARY KEY(username,wish_name,serial_no),
+    FOREIGN KEY(username,wish_name) REFERENCES WishList ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(serial_no) REFERENCES Product ON UPDATE CASCADE ON DELETE NO ACTION
+)
+
+CREATE TABLE Admin_Customer_Giftcard(
+    code INT,
+    Customer_name VARCHAR(20),
+    admin_username VARCHAR(20),
+    remaining_points INT,
+    PRIMARY KEY(code,Customer_name,admin_username),
+    FOREIGN KEY(code) REFERENCES Giftcard ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(Customer_name) REFERENCES Customer ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(admin_username) REFERENCES Admins ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+
+CREATE TABLE Admin_Delivery_Order(
+    delivery_username VARCHAR(20),
+    order_no INT,
+    admin_username VARCHAR(20),
+    delivery_window DATETIME,
+    PRIMARY KEY(delivery_username,order_no),
+    FOREIGN KEY(delivery_username) REFERENCES Delivery_Person ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(order_no) REFERENCES Orders ON UPDATE NO ACTION ON DELETE NO ACTION,
+    FOREIGN KEY(admin_username) REFERENCES Admins ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+
+CREATE TABLE Customer_Creditcard(
+    Customer_name VARCHAR(20),
+    cc_number varchar(20),
+    PRIMARY KEY(Customer_name,cc_number),
+    FOREIGN KEY(Customer_name) REFERENCES Customer ON UPDATE CASCADE ON DELETE NO ACTION,
+    FOREIGN KEY(cc_number) REFERENCES Credit_Card ON UPDATE CASCADE ON DELETE NO ACTION,
+)
